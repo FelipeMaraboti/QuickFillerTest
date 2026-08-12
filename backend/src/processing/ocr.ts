@@ -34,49 +34,36 @@ class NodeCanvasFactory {
   }
 }
 
-export async function performOCR(filePath: string): Promise<string[]> {
+export async function performOCRForPage(filePath: string, pageNumber: number): Promise<string> {
   const data = new Uint8Array(fs.readFileSync(filePath))
   const loadingTask = pdfjsLib.getDocument({
     data,
     useSystemFonts: true,
+    disableFontFace: true,
   })
 
   const pdfDocument = await loadingTask.promise
-  const pagesText: string[] = []
+  const page = await pdfDocument.getPage(pageNumber)
 
-  const worker = await Tesseract.createWorker('por')
+  const viewport = page.getViewport({ scale: 2 })
   const canvasFactory = new NodeCanvasFactory()
+  const canvasAndContext = canvasFactory.create(viewport.width, viewport.height)
 
-  try {
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
-      const page = await pdfDocument.getPage(i)
-
-      const viewport = page.getViewport({
-        scale: 2,
-      })
-
-      const canvasAndContext = canvasFactory.create(
-        viewport.width,
-        viewport.height
-      )
-
-      const renderContext = {
-        canvasContext: canvasAndContext.context,
-        viewport,
-        canvasFactory,
-      }
-
-      await page.render(renderContext as any).promise
-
-      const imageBuffer = canvasAndContext.canvas.toBuffer('image/png')
-      const result = await worker.recognize(imageBuffer)
-
-      pagesText.push(result.data.text)
-      canvasFactory.destroy(canvasAndContext)
-    }
-  } finally {
-    await worker.terminate()
+  const renderContext = {
+    canvasContext: canvasAndContext.context,
+    viewport,
+    canvasFactory,
   }
 
-  return pagesText
+  const worker = await Tesseract.createWorker('por')
+
+  try {
+    await page.render(renderContext as any).promise
+    const imageBuffer = canvasAndContext.canvas.toBuffer('image/png')
+    const result = await worker.recognize(imageBuffer)
+    return result.data.text
+  } finally {
+    canvasFactory.destroy(canvasAndContext)
+    await worker.terminate()
+  }
 }
