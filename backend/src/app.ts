@@ -3,7 +3,7 @@ import multipart from '@fastify/multipart'
 import { transcricoesRoutes } from './routes/transcricoes'
 
 export function buildApp() {
-  const app = Fastify({ logger: false })
+  const app = Fastify({ logger: true })
 
   app.register(multipart, {
     limits: {

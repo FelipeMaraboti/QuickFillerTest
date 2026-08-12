@@ -6,45 +6,54 @@ import path from 'path'
 
 export async function transcricoesRoutes(server: FastifyInstance) {
   server.post('/transcricoes', async (request, reply) => {
-    const data = await request.file()
-    if (!data) {
-      return reply.status(400).send({ error: 'Nenhum arquivo enviado.' })
-    }
-
-    const fileBuffer = await data.toBuffer()
-    const fields = data.fields
-    
-    // Na API de multipart do fastify, os text fields vêm como objetos complexos, precisamos pegar o .value
-    const tipoField = fields['tipo'] as any
-    const tipo = tipoField ? tipoField.value : null
-
-    if (!tipo || (tipo !== 'cartao-ponto' && tipo !== 'holerite')) {
-      return reply.status(400).send({ error: 'Tipo inválido. Escolha cartao-ponto ou holerite.' })
-    }
-
-    // Criar o registro no banco
-    const transcricao = await prisma.transcricao.create({
-      data: {
-        tipo,
-        status: 'processando',
-        filePath: '', // Atualizaremos logo abaixo
+    try {
+      const data = await request.file()
+      if (!data) {
+        return reply.status(400).send({ error: 'Nenhum arquivo enviado.' })
       }
-    })
 
-    const fileName = `${transcricao.id}.pdf`
-    const filePath = path.join(process.cwd(), 'uploads', fileName)
-    
-    await fs.writeFile(filePath, fileBuffer)
+      const fileBuffer = await data.toBuffer()
+      const fields = data.fields
+      
+      // Na API de multipart do fastify, os text fields vêm como objetos complexos, precisamos pegar o .value
+      const tipoField = fields['tipo'] as any
+      const tipo = tipoField ? tipoField.value : null
 
-    await prisma.transcricao.update({
-      where: { id: transcricao.id },
-      data: { filePath }
-    })
+      if (!tipo || (tipo !== 'cartao-ponto' && tipo !== 'holerite')) {
+        return reply.status(400).send({ error: 'Tipo inválido. Escolha cartao-ponto ou holerite.' })
+      }
 
-    // Iniciar o processamento assíncrono sem await para não travar a request
-    processarPDF(transcricao.id, filePath, tipo).catch(console.error)
+      // Garantir que a pasta uploads existe
+      const uploadsDir = path.join(process.cwd(), 'uploads')
+      await fs.mkdir(uploadsDir, { recursive: true })
 
-    reply.status(202).send({ id: transcricao.id })
+      // Criar o registro no banco
+      const transcricao = await prisma.transcricao.create({
+        data: {
+          tipo,
+          status: 'processando',
+          filePath: '', // Atualizaremos logo abaixo
+        }
+      })
+
+      const fileName = `${transcricao.id}.pdf`
+      const filePath = path.join(uploadsDir, fileName)
+      
+      await fs.writeFile(filePath, fileBuffer)
+
+      await prisma.transcricao.update({
+        where: { id: transcricao.id },
+        data: { filePath }
+      })
+
+      // Iniciar o processamento assíncrono sem await para não travar a request
+      processarPDF(transcricao.id, filePath, tipo).catch(console.error)
+
+      reply.status(202).send({ id: transcricao.id })
+    } catch (err: any) {
+      request.log.error(err)
+      reply.status(500).send({ error: err.message || 'Erro interno no servidor.' })
+    }
   })
 
   server.get('/transcricoes/:id', async (request, reply) => {
