@@ -19,8 +19,11 @@ export function extrairCartaoPonto(textPages: string[]) {
       const matchDay = cleanLine.match(/^(\d{1,2})\s*[\-\s]?\s*([A-Za-z]{3})\b(.*)/i)
       // Tentativa 3: Formato Quinzena/Número de dia isolado no início da linha (Ex: "1 09:50 14:15", "17 09:32 14:23")
       const matchQuinzenaDay = cleanLine.match(/^(\d{1,2})\s+([\+\d\?:]{4,}.*)/)
+      // Tentativa 4: Formato linha começando direto pela sigla do dia da semana (Ex: "SEG 07:00d 12:00d", "TER ABONO JORNADA")
+      const matchPureDow = cleanLine.match(/^(SEG|TER|QUA|QUI|SEX|SAB|DOM)\b(.*)/i)
 
       let remainingText = ''
+      let isDayMatch = false
 
       if (matchDate) {
         currentDay = {
@@ -36,6 +39,7 @@ export function extrairCartaoPonto(textPages: string[]) {
         }
         days.push(currentDay)
         remainingText = matchDay[3]
+        isDayMatch = true
       } else if (matchQuinzenaDay && parseInt(matchQuinzenaDay[1]) >= 1 && parseInt(matchQuinzenaDay[1]) <= 31) {
         currentDay = {
           date_raw: `Dia ${matchQuinzenaDay[1]}`,
@@ -43,6 +47,13 @@ export function extrairCartaoPonto(textPages: string[]) {
         }
         days.push(currentDay)
         remainingText = matchQuinzenaDay[2]
+      } else if (matchPureDow) {
+        currentDay = {
+          date_raw: matchPureDow[1].toUpperCase(),
+          punches: []
+        }
+        days.push(currentDay)
+        remainingText = matchPureDow[2]
       } else if (currentDay) {
         // Se a linha não começa com data, mas já temos um currentDay, os horários podem estar nesta linha
         const isTimeLine = cleanLine.match(/^[\+\s]*[\d\?]{2}:[\d\?]{2}/)
@@ -70,7 +81,7 @@ export function extrairCartaoPonto(textPages: string[]) {
           }
           lastMatchIndex = match.index + match[0].length
           
-          // Ignorar carga horária de jornada (se for o primeiro item do dia e for a jornada cadastrada no cabeçalho do dia)
+          // Ignorar carga horária de jornada (se for o primeiro item do dia e for a jornada cadastrada no cabeçalho do dia como 2 - SEG 08:00 09:03 ...)
           if (matchDay && isFirstTimeMatch) {
              isFirstTimeMatch = false
              continue
