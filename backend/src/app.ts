@@ -1,26 +1,21 @@
 import Fastify from 'fastify'
 import multipart from '@fastify/multipart'
+import cors from '@fastify/cors'
 import { transcricoesRoutes } from './routes/transcricoes'
 
 export function buildApp() {
   const app = Fastify({ logger: true })
+
+  app.register(cors, {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  })
 
   app.register(multipart, {
     limits: {
       fileSize: 20 * 1024 * 1024,
       files: 1
     }
-  })
-
-  app.addHook('onRequest', (request, reply, done) => {
-    reply.header('Access-Control-Allow-Origin', '*')
-    reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    if (request.method === 'OPTIONS') {
-      reply.send()
-      return
-    }
-    done()
   })
 
   app.get('/healthz', async () => {
