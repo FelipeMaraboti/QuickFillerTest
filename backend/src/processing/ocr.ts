@@ -32,8 +32,11 @@ class NodeCanvasFactory {
   }
 }
 
+import fs from 'fs'
+
 export async function performOCR(filePath: string): Promise<string[]> {
-  const loadingTask = pdfjsLib.getDocument({ url: filePath, useSystemFonts: true })
+  const data = new Uint8Array(fs.readFileSync(filePath))
+  const loadingTask = pdfjsLib.getDocument({ data, useSystemFonts: true })
   const pdfDocument = await loadingTask.promise
   const pagesText: string[] = []
 
