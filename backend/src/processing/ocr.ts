@@ -1,34 +1,23 @@
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { createCanvas } from 'canvas'
+import pdfImg from 'pdf-img-convert'
 import Tesseract from 'tesseract.js'
 import sharp from 'sharp'
-import fs from 'fs'
 
 export async function performOCRForPage(filePath: string, pageNumber: number): Promise<string> {
   try {
-    const data = new Uint8Array(fs.readFileSync(filePath))
-    const loadingTask = pdfjsLib.getDocument({
-      data,
-      useSystemFonts: true,
-      disableFontFace: true,
+    // Converter apenas a página desejada em buffer PNG de alta qualidade
+    const outputImages = await pdfImg.convert(filePath, {
+      page_numbers: [pageNumber],
+      scale: 2.0,
     })
 
-    const pdfDocument = await loadingTask.promise
-    const page = await pdfDocument.getPage(pageNumber)
-
-    const viewport = page.getViewport({ scale: 2.0 })
-    const canvas = createCanvas(viewport.width, viewport.height)
-    const context = canvas.getContext('2d')
-
-    const renderContext = {
-      canvasContext: context as any,
-      viewport,
+    if (!outputImages || outputImages.length === 0) {
+      console.warn(`[OCR Warning] Nenhuma imagem gerada para a página ${pageNumber}`)
+      return ''
     }
 
-    await page.render(renderContext).promise
-    const rawBuffer = canvas.toBuffer('image/png')
+    const rawBuffer = Buffer.from(outputImages[0])
 
-    // Pré-processamento com Sharp:
+    // Tratar com Sharp para maximizar legibilidade no Tesseract:
     const processedBuffer = await sharp(rawBuffer)
       .grayscale()
       .normalize()
@@ -36,9 +25,8 @@ export async function performOCRForPage(filePath: string, pageNumber: number): P
       .png()
       .toBuffer()
 
-    // Rodar OCR com Tesseract.recognize direto (sem criar worker isolado que exige threadpool no Windows)
     const { data: { text } } = await Tesseract.recognize(processedBuffer, 'por')
-    return text
+    return text || ''
   } catch (err) {
     console.error(`[OCR Error] Falha no OCR da página ${pageNumber}:`, err)
     return ''

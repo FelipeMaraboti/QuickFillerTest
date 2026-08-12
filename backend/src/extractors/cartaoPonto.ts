@@ -63,9 +63,8 @@ export function extrairCartaoPonto(textPages: string[]) {
       }
 
       if (currentDay && remainingText) {
-        // Extrair horários do remainingText
-        // Regex para buscar horários no formato +00:00, 00:00, 0?:00, ??:?? e com sufixos opcionais como 'd' ou 'c'
-        const timeRegex = /([\+]?[\d\?]{2}:[\d\?]{2}[a-zA-Z]?)/g
+        // Extrair horários do remainingText (tolerante a OCR com :, . ou ,)
+        const timeRegex = /([\+]?[\d\?]{1,2}[:\.,][\d\?]{2}[a-zA-Z]?)/g
         let match
         let isFirstTimeMatch = true
         let lastMatchIndex = 0
@@ -88,8 +87,8 @@ export function extrairCartaoPonto(textPages: string[]) {
           }
           isFirstTimeMatch = false
 
-          // Normalizar para HH:MM (removendo o + inicial e sufixos de letras como d/c)
-          const time_hhmm = time_raw.replace(/^[\+]/, '').replace(/[a-zA-Z]+$/, '')
+          // Normalizar para HH:MM (substituindo . ou , por :, removendo o + inicial e sufixos de letras como d/c)
+          const time_hhmm = time_raw.replace(/^[\+]/, '').replace(/[a-zA-Z]+$/, '').replace(/[\.,]/, ':')
           
           currentDay.punches.push({
             kind: currentDay.punches.length % 2 === 0 ? 'IN' : 'OUT',
