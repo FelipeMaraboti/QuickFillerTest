@@ -1,16 +1,21 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: quickfiller
-      POSTGRES_PASSWORD: quickfiller
-      POSTGRES_DB: quickfiller
+  backend:
+    build: ./backend
     ports:
-      - "5432:5432"
+      - "3333:3333"
+    environment:
+      - DATABASE_URL=file:./dev.db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - backend_data:/app/prisma
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
-  postgres_data:
+  backend_data:
