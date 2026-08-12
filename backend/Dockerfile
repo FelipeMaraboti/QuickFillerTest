@@ -1,7 +1,9 @@
 FROM node:20-alpine
 
 # Instala dependências nativas para o Tesseract.js e utilitários
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ \
+    cairo-dev pango-dev libjpeg-turbo-dev giflib-dev \
+    librsvg-dev pixman-dev font-noto
 
 WORKDIR /app
 

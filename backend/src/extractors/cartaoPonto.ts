@@ -4,14 +4,32 @@ export function extrairCartaoPonto(textPages: string[]) {
   for (let i = 0; i < textPages.length; i++) {
     const pageText = textPages[i]
     const lines = pageText.split('\n')
-    const days: any[] = []
-    
+    let days: any[] = []
     let currentDay: any = null
+    let period_month_year = ''
+
+    const commitPage = () => {
+      if (days.length > 0) {
+        result.pages.push({
+          page: result.pages.length + 1,
+          period_month_year,
+          days
+        })
+      }
+      days = []
+    }
 
     for (const line of lines) {
       // Remover espaços múltiplos e limpar
       const cleanLine = line.replace(/\s+/g, ' ').trim()
       if (!cleanLine) continue
+
+      // Extrair Período de Competência para separar as páginas lógicas
+      const periodMatch = cleanLine.match(/(?:Per[íi]odo|Referencia|M[êe]s(?:\s*de\s*Refer[êe]ncia)?)\s*[:]?\s*(.+)/i)
+      if (periodMatch) {
+        commitPage()
+        period_month_year = periodMatch[1].trim()
+      }
 
       // Tentativa 1: Formato DD/MM/YYYY ou DD/MM/YY
       const matchDate = cleanLine.match(/^(\d{2}[\/\.-]\d{2}[\/\.-]\d{2,4})(.*)/)
@@ -99,10 +117,7 @@ export function extrairCartaoPonto(textPages: string[]) {
       }
     }
 
-    result.pages.push({
-      page: i + 1,
-      days
-    })
+    commitPage()
   }
 
   return result

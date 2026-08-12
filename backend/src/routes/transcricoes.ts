@@ -69,6 +69,7 @@ export async function transcricoesRoutes(server: FastifyInstance) {
       tipo: transcricao.tipo,
       status: transcricao.status,
       erro: transcricao.erro,
+      progresso: transcricao.progresso ? JSON.parse(transcricao.progresso) : null,
       value: transcricao.value ? JSON.parse(transcricao.value) : null
     })
   })

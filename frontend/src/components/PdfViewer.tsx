@@ -14,7 +14,7 @@ interface PdfViewerProps {
 export default function PdfViewer({ id }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number>()
   const [pageNumber, setPageNumber] = useState<number>(1)
-  const [scale, setScale] = useState<number>(1.2)
+  const [scale, setScale] = useState<number>(1.0)
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages)
