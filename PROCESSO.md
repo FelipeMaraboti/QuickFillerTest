@@ -20,3 +20,13 @@ Em vez de mapear tabelas filhas para cada `Punch` ou `HoleriteField`, usamos um 
 
 ### 3. Validações e Contratos
 Para garantir que "um número errado nunca passe despercebido", as validações (`zod`) e o contrato da API original foram respeitados de forma puritana (incluindo as interrogações `?` nos caracteres incertos). Além disso, não persistimos lógicas visuais no banco (como avisos de células vermelhas ou amarelas), delegando essa inteligência puramente para a rota geradora de relatórios (`exceljs`), mantendo o banco de dados apenas com a verdade extraída.
+
+## 🤖 Uso de Inteligência Artificial
+
+A Inteligência Artificial foi utilizada neste projeto como uma ferramenta de **pair-programming** contínua, focada em acelerar ciclos de feedback e reduzir tempo gasto com boilerplates estruturais. Principais usos:
+
+1. **Discussão Arquitetural:** Validação das escolhas de stack e trade-offs estruturais (como a viabilidade de usar SQLite para contornar gargalos de deployment no `docker-compose`).
+2. **Construção de Heurísticas:** As expressões regulares densas (como o `/([\d\?]{2}:[\d\?]{2}[a-zA-Z]?)/g`) foram prototipadas iterativamente com IA para prever ruídos caóticos gerados pelo `Tesseract.js` (como letras aleatórias grudadas nas horas).
+3. **Escrita Rápida de Testes:** A geração do esqueleto dos testes de integração no Vitest e a formatação de mocks baseada no texto OCR extraído.
+
+A IA atuou estritamente como acelerador, mantendo o direcionamento arquitetural, o code review e a decisão final sobre regras de negócio sempre centrados no controle humano.
