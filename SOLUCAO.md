@@ -6,7 +6,7 @@ Este documento detalha a arquitetura e as soluções encontradas para o desafio 
 
 O sistema foi desenhado visando ser **simples, escalável e robusto**, separando claramente as responsabilidades:
 
-1. **Frontend (Next.js + Tailwind + shadcn/ui):** Foco total na experiência de revisão, permitindo visualização do PDF lado a lado com a edição.
+1. **Frontend (Vite + React + Tailwind + shadcn/ui):** Foco total na experiência de revisão, permitindo visualização do PDF lado a lado com a edição.
 2. **Backend (Node.js + Fastify):** Escolhido por lidar extremamente bem com rotas assíncronas e uploads multipartes. Ele atua como orquestrador do processamento.
 3. **Banco de Dados (Prisma + SQLite/PostgreSQL):** A modelagem de dados foi mantida intencionalmente simples, com uma única tabela `Transcricao` e os dados estruturados armazenados em uma coluna JSON (`value`). Isso permite flexibilidade caso novos tipos de documentos ou campos sejam adicionados no futuro.
 4. **Infraestrutura (Docker):** Toda a stack roda encapsulada, garantindo que o comando `docker-compose up` seja o único requisito para testar.

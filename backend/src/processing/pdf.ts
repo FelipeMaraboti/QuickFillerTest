@@ -1,4 +1,4 @@
-import * as pdfjsLib from 'pdfjs-dist'
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 
 export async function extractTextFromPDF(filePath: string): Promise<string[]> {
   const loadingTask = pdfjsLib.getDocument({ url: filePath, useSystemFonts: true })

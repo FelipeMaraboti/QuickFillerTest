@@ -20,7 +20,7 @@ O Frontend estará acessível em `http://localhost:3000` e a API rodando em `htt
 
 O projeto adota uma arquitetura full-stack moderna e pragmática:
 
-- **Frontend:** Next.js, TypeScript, Tailwind CSS e `shadcn/ui`. Focado em uma interface interativa (visualização lado a lado do PDF com edição da tabela em tempo real).
+- **Frontend:** Vite, React, TypeScript, Tailwind CSS e `shadcn/ui`. Focado em uma interface interativa (visualização lado a lado do PDF com edição da tabela em tempo real).
 - **Backend:** Node.js com Fastify. Escolhido pela alta performance em lidar com uploads (multipart) e rotas rápidas.
 - **Banco de Dados:** SQLite via Prisma ORM. O uso de SQLite local (dentro do container) garante praticidade extrema para avaliação, mantendo as transcrições e status consistentes.
 - **Processamento/Worker:** O pipeline de extração funciona integrado ao Node (graças ao worker thread nativo do `tesseract.js`), recebendo o upload, registrando no banco, e disparando a leitura de maneira assíncrona.
