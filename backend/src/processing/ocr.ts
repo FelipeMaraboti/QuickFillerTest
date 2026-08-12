@@ -1,6 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { createCanvas } from 'canvas'
 import Tesseract from 'tesseract.js'
+import sharp from 'sharp'
 import fs from 'fs'
 
 class NodeCanvasFactory {
@@ -45,7 +46,7 @@ export async function performOCRForPage(filePath: string, pageNumber: number): P
   const pdfDocument = await loadingTask.promise
   const page = await pdfDocument.getPage(pageNumber)
 
-  const viewport = page.getViewport({ scale: 2 })
+  const viewport = page.getViewport({ scale: 2.5 }) // Aumentar escala para 2.5x melhora muito imagens escaneadas
   const canvasFactory = new NodeCanvasFactory()
   const canvasAndContext = canvasFactory.create(viewport.width, viewport.height)
 
@@ -55,15 +56,28 @@ export async function performOCRForPage(filePath: string, pageNumber: number): P
     canvasFactory,
   }
 
-  const worker = await Tesseract.createWorker('por')
-
   try {
     await page.render(renderContext as any).promise
-    const imageBuffer = canvasAndContext.canvas.toBuffer('image/png')
-    const result = await worker.recognize(imageBuffer)
-    return result.data.text
+    const rawBuffer = canvasAndContext.canvas.toBuffer('image/png')
+
+    // Pré-processamento com Sharp para documentos escaneados/fotos:
+    // 1. Escala de cinza (grayscale)
+    // 2. Normalização de iluminação (normalize)
+    // 3. Sharpen (nitidez dos numéricos/dígitos)
+    const processedBuffer = await sharp(rawBuffer)
+      .grayscale()
+      .normalize()
+      .sharpen()
+      .png()
+      .toBuffer()
+
+    // Rodar Tesseract OCR na imagem tratada
+    const { data: { text } } = await Tesseract.recognize(processedBuffer, 'por')
+    return text
+  } catch (err) {
+    console.error(`[OCR Error] Falha no OCR da página ${pageNumber}:`, err)
+    return ''
   } finally {
     canvasFactory.destroy(canvasAndContext)
-    await worker.terminate()
   }
 }

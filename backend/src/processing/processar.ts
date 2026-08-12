@@ -16,10 +16,30 @@ export async function processarPDF(id: string, filePath: string, tipo: string) {
       const pageNum = pageIdx + 1
 
       if (pageText.trim().length >= MIN_TEXT_LENGTH_PER_PAGE) {
-        console.log(`[${id}] Página ${pageNum}: Usando texto nativo do PDF. (${pageText.trim().length} chars)`)
-        finalPagesText.push(pageText)
+        console.log(`[${id}] Página ${pageNum}: Testando extração nativa... (${pageText.trim().length} chars)`)
+        
+        // Tenta rodar o extrator no texto nativo
+        let testResult: any
+        if (tipo === 'cartao-ponto') {
+          testResult = extrairCartaoPonto([pageText])
+        } else {
+          testResult = extrairHolerite([pageText])
+        }
+
+        const hasValidData = tipo === 'cartao-ponto' 
+          ? (testResult?.pages[0]?.days?.length > 0)
+          : (testResult?.pages[0]?.fields?.length > 0 || testResult?.pages[0]?.bases?.length > 0)
+
+        if (hasValidData) {
+          console.log(`[${id}] Página ${pageNum}: Texto nativo VÁLIDO extraído com sucesso!`)
+          finalPagesText.push(pageText)
+        } else {
+          console.log(`[${id}] Página ${pageNum}: Texto nativo insuficiente/inválido. Forçando OCR...`)
+          const ocrText = await performOCRForPage(filePath, pageNum)
+          finalPagesText.push(ocrText)
+        }
       } else {
-        console.log(`[${id}] Página ${pageNum}: Texto insuficiente (${pageText.trim().length} chars). Executando OCR...`)
+        console.log(`[${id}] Página ${pageNum}: Texto ausente (${pageText.trim().length} chars). Executando OCR...`)
         const ocrText = await performOCRForPage(filePath, pageNum)
         finalPagesText.push(ocrText)
       }
