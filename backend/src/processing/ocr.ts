@@ -43,7 +43,8 @@ export async function performOCR(filePath: string): Promise<string[]> {
     const renderContext = {
       canvasContext: canvasAndContext.context as any,
       viewport,
-      canvasFactory
+      canvasFactory,
+      canvas: canvasAndContext.canvas as any
     }
 
     await page.render(renderContext).promise
