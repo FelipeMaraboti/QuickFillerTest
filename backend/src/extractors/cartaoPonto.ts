@@ -13,10 +13,10 @@ export function extrairCartaoPonto(textPages: string[]) {
       const cleanLine = line.replace(/\s+/g, ' ').trim()
       if (!cleanLine) continue
 
-      // Tentativa 1: Formato DD/MM/YYYY
-      const matchDate = cleanLine.match(/^(\d{2}\/\d{2}\/\d{4})(.*)/)
-      // Tentativa 2: Formato DD - DOW (Ex: 1 - DOM, 2 - SEG)
-      const matchDay = cleanLine.match(/^(\d{1,2}\s*-\s*[A-Z]{3})(.*)/i)
+      // Tentativa 1: Formato DD/MM/YYYY ou DD/MM/YY
+      const matchDate = cleanLine.match(/(\d{2}[\/\.-]\d{2}[\/\.-]\d{2,4})(.*)/)
+      // Tentativa 2: Formato DD - DOW (Ex: 1 - DOM, 2 - SEG ou 01 SEG)
+      const matchDay = cleanLine.match(/(\d{1,2}\s*[\-\s]\s*[A-Z]{3})(.*)/i)
 
       let remainingText = ''
 
