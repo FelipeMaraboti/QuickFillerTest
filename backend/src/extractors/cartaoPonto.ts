@@ -13,10 +13,12 @@ export function extrairCartaoPonto(textPages: string[]) {
       const cleanLine = line.replace(/\s+/g, ' ').trim()
       if (!cleanLine) continue
 
-      // Tentativa 1: Formato DD/MM/YYYY ou DD/MM/YY no início ou após espaços
+      // Tentativa 1: Formato DD/MM/YYYY ou DD/MM/YY
       const matchDate = cleanLine.match(/^(\d{2}[\/\.-]\d{2}[\/\.-]\d{2,4})(.*)/)
-      // Tentativa 2: Formato DD - DOW (Ex: 1 - DOM, 2 - SEG ou 01 SEG)
+      // Tentativa 2: Formato DD - DOW (Ex: 01 SAB, 02 DOM, 1 - DOM, 2 - SEG)
       const matchDay = cleanLine.match(/^(\d{1,2}\s*[\-\s]\s*[A-Za-z]{3})(.*)/i)
+      // Tentativa 3: Formato Quinzena/Número de dia isolado no início da linha (Ex: "1 09:50 14:15", "17 09:32 14:23")
+      const matchQuinzenaDay = cleanLine.match(/^(\d{1,2})\s+([\+\d\?:]{4,}.*)/)
 
       let remainingText = ''
 
@@ -34,12 +36,16 @@ export function extrairCartaoPonto(textPages: string[]) {
         }
         days.push(currentDay)
         remainingText = matchDay[2]
+      } else if (matchQuinzenaDay && parseInt(matchQuinzenaDay[1]) >= 1 && parseInt(matchQuinzenaDay[1]) <= 31) {
+        currentDay = {
+          date_raw: `Dia ${matchQuinzenaDay[1]}`,
+          punches: []
+        }
+        days.push(currentDay)
+        remainingText = matchQuinzenaDay[2]
       } else if (currentDay) {
         // Se a linha não começa com data, mas já temos um currentDay, os horários podem estar nesta linha
-        // ex: 15:12 18:36 na linha de baixo
-        // Temos que garantir que não é outra seção do documento.
-        // Vamos considerar se a linha começar com horário ou tiver formato semelhante
-        const isTimeLine = cleanLine.match(/^\d{2}:\d{2}/) || cleanLine.match(/^\d\?:\d{2}/) || cleanLine.match(/^\?\d:\d{2}/)
+        const isTimeLine = cleanLine.match(/^[\+\s]*[\d\?]{2}:[\d\?]{2}/)
         if (isTimeLine) {
           remainingText = cleanLine
         }
@@ -47,9 +53,8 @@ export function extrairCartaoPonto(textPages: string[]) {
 
       if (currentDay && remainingText) {
         // Extrair horários do remainingText
-        // Regex para buscar horários no formato 00:00, 0?:00, ??:?? e com sufixos opcionais como 'd' ou 'c'
-        // \d|\? é usado para suportar o OCR com caracteres incertos
-        const timeRegex = /([\d\?]{2}:[\d\?]{2}[a-zA-Z]?)/g
+        // Regex para buscar horários no formato +00:00, 00:00, 0?:00, ??:?? e com sufixos opcionais como 'd' ou 'c'
+        const timeRegex = /([\+]?[\d\?]{2}:[\d\?]{2}[a-zA-Z]?)/g
         let match
         let isFirstTimeMatch = true
         let lastMatchIndex = 0
@@ -57,23 +62,23 @@ export function extrairCartaoPonto(textPages: string[]) {
         while ((match = timeRegex.exec(remainingText)) !== null) {
           const time_raw = match[1]
 
-          // Se houver texto puro entre a última batida (ou o início) e esta batida, provavelmente entramos na seção "Ocorrencia"
+          // Se houver texto puro entre a última batida (ou o início) e esta batida, ignorar se for apenas hífen de intervalo (ex: 12:00 - 18:15)
           const textBetween = remainingText.slice(lastMatchIndex, match.index).trim()
-          if (textBetween && textBetween.match(/[A-Za-z]{3,}/)) {
-             // Tem palavras no meio, então as batidas acabaram
+          if (textBetween && textBetween !== '-' && textBetween.match(/[A-Za-z]{3,}/)) {
+             // Tem palavras de ocorrência no meio (ex: HE-BCO DE HORAS), então as batidas acabaram
              break
           }
           lastMatchIndex = match.index + match[0].length
           
-          // Ignorar jornada
-          if (matchDay && isFirstTimeMatch && remainingText.trim().startsWith(time_raw)) {
+          // Ignorar carga horária de jornada (se for o primeiro item do dia e for a jornada cadastrada no cabeçalho do dia)
+          if (matchDay && isFirstTimeMatch) {
              isFirstTimeMatch = false
              continue
           }
           isFirstTimeMatch = false
 
-          // Normalizar para HH:MM
-          const time_hhmm = time_raw.replace(/[a-zA-Z]+$/, '')
+          // Normalizar para HH:MM (removendo o + inicial e sufixos de letras como d/c)
+          const time_hhmm = time_raw.replace(/^[\+]/, '').replace(/[a-zA-Z]+$/, '')
           
           currentDay.punches.push({
             kind: currentDay.punches.length % 2 === 0 ? 'IN' : 'OUT',
