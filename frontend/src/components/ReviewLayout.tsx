@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Transcricao } from '../App'
+import type { Transcricao } from '../types'
 import PdfViewer from './PdfViewer'
 import CartaoPontoTable from './CartaoPontoTable'
 import HoleriteTable from './HoleriteTable'

@@ -2,15 +2,7 @@ import { useState } from 'react'
 import UploadForm from './components/UploadForm'
 import ProcessingStatus from './components/ProcessingStatus'
 import ReviewLayout from './components/ReviewLayout'
-
-export type AppState = 'uploading' | 'processing' | 'reviewing' | 'error'
-
-export interface Transcricao {
-  id: string
-  status: string
-  tipo: string
-  value: any
-}
+import type { AppState, Transcricao } from './types'
 
 function App() {
   const [appState, setAppState] = useState<AppState>('uploading')

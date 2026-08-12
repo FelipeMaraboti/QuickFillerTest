@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Transcricao } from '../App'
+import type { Transcricao } from '../types'
 import { FileSearch } from 'lucide-react'
 
 interface ProcessingStatusProps {
