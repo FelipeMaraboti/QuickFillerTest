@@ -1,6 +1,14 @@
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { createCanvas } from 'canvas'
+import { createCanvas, Canvas, Image } from 'canvas'
 import Tesseract from 'tesseract.js'
+
+// Polyfill global para o pdfjs-dist no Node.js
+if (typeof globalThis.HTMLCanvasElement === 'undefined') {
+  ;(globalThis as any).HTMLCanvasElement = Canvas
+}
+if (typeof globalThis.Image === 'undefined') {
+  ;(globalThis as any).Image = Image
+}
 
 // Simulação de DOM para pdfjs rodar no node
 class NodeCanvasFactory {
@@ -43,11 +51,10 @@ export async function performOCR(filePath: string): Promise<string[]> {
     const renderContext = {
       canvasContext: canvasAndContext.context as any,
       viewport,
-      canvasFactory,
-      canvas: canvasAndContext.canvas as any
+      canvasFactory
     }
 
-    await page.render(renderContext).promise
+    await (page as any).render(renderContext).promise
 
     // Converter canvas para buffer
     const buffer = canvasAndContext.canvas.toBuffer('image/png')
