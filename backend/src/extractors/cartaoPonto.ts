@@ -15,8 +15,8 @@ export function extrairCartaoPonto(textPages: string[]) {
 
       // Tentativa 1: Formato DD/MM/YYYY ou DD/MM/YY
       const matchDate = cleanLine.match(/^(\d{2}[\/\.-]\d{2}[\/\.-]\d{2,4})(.*)/)
-      // Tentativa 2: Formato DD - DOW (Ex: 01 SAB, 02 DOM, 1 - DOM, 2 - SEG)
-      const matchDay = cleanLine.match(/^(\d{1,2}\s*[\-\s]\s*[A-Za-z]{3})(.*)/i)
+      // Tentativa 2: Formato DD DOW ou DD - DOW (Ex: 01 SAB, 02 DOM, 1 - DOM, 2 - SEG, 17 SEG)
+      const matchDay = cleanLine.match(/^(\d{1,2})\s*[\-\s]?\s*([A-Za-z]{3})\b(.*)/i)
       // Tentativa 3: Formato Quinzena/Número de dia isolado no início da linha (Ex: "1 09:50 14:15", "17 09:32 14:23")
       const matchQuinzenaDay = cleanLine.match(/^(\d{1,2})\s+([\+\d\?:]{4,}.*)/)
 
@@ -31,11 +31,11 @@ export function extrairCartaoPonto(textPages: string[]) {
         remainingText = matchDate[2].replace(/^\s*[A-Za-z]{3}\s*/, '')
       } else if (matchDay) {
         currentDay = {
-          date_raw: matchDay[1],
+          date_raw: `${matchDay[1]} - ${matchDay[2].toUpperCase()}`,
           punches: []
         }
         days.push(currentDay)
-        remainingText = matchDay[2]
+        remainingText = matchDay[3]
       } else if (matchQuinzenaDay && parseInt(matchQuinzenaDay[1]) >= 1 && parseInt(matchQuinzenaDay[1]) <= 31) {
         currentDay = {
           date_raw: `Dia ${matchQuinzenaDay[1]}`,
