@@ -19,6 +19,7 @@
     "canvas": "^3.2.3",
     "exceljs": "^4.4.0",
     "fastify": "^5.11.3",
+    "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.6.205",
     "tesseract.js": "^7.0.0",
     "zod": "^4.4.3"
